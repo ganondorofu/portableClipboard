@@ -20,7 +20,7 @@ namespace portableClipboard
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            Console.Out.WriteLine(SlotFileManager.test());
+            string selectedText = comboBox1.SelectedItem.ToString();
         }
 
         public void initCombobox() {
