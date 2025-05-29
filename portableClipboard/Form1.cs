@@ -74,7 +74,7 @@ namespace portableClipboard
 
             if (comboBox1.Items.Count > 0)
             {
-                comboBox1.SelectedIndex = 0;
+                //comboBox1.SelectedIndex = 0;
                 previousSlot = comboBox1.Text;
             }
         }
@@ -110,7 +110,7 @@ namespace portableClipboard
                 comboBox2.Enabled = true;
             }
 
-            comboBox2.SelectedIndex = 0;
+            //comboBox2.SelectedIndex = 0;
         }
 
         private void button2_Click(object sender, EventArgs e)
