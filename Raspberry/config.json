@@ -1,0 +1,7 @@
+{
+  "startup_delay": 3,
+  "typing_delay": 0.01,
+  "add_final_enter": false,
+  "enable_modifier_keys": true,
+  "japanese_keyboard": false
+}
