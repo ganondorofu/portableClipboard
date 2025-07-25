@@ -80,7 +80,6 @@ namespace portableClipboard
             }
         }
 
-
         /// <summary>
         /// 再読み込みボタンクリックイベント
         /// </summary>
