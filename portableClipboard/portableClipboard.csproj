@@ -8,7 +8,7 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>portableClipboard</RootNamespace>
     <AssemblyName>portableClipboard</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
@@ -117,38 +117,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="..\Raspberry\code.py">
-      <Link>Resources\code.py</Link>
-    </EmbeddedResource>
-    <EmbeddedResource Include="..\Raspberry\config.json">
-      <Link>Resources\config.json</Link>
-    </EmbeddedResource>
-    <EmbeddedResource Include="..\Raspberry\lib\adafruit_hid\__init__.py">
-      <Link>Resources\adafruit_hid\__init__.py</Link>
-    </EmbeddedResource>
-    <EmbeddedResource Include="..\Raspberry\lib\adafruit_hid\keyboard.py">
-      <Link>Resources\adafruit_hid\keyboard.py</Link>
-    </EmbeddedResource>
-    <EmbeddedResource Include="..\Raspberry\lib\adafruit_hid\keycode.py">
-      <Link>Resources\adafruit_hid\keycode.py</Link>
-    </EmbeddedResource>
-    <EmbeddedResource Include="..\Raspberry\lib\adafruit_hid\keyboard_layout_base.py">
-      <Link>Resources\adafruit_hid\keyboard_layout_base.py</Link>
-    </EmbeddedResource>
-    <EmbeddedResource Include="..\Raspberry\lib\adafruit_hid\keyboard_layout_us.py">
-      <Link>Resources\adafruit_hid\keyboard_layout_us.py</Link>
-    </EmbeddedResource>
-    <EmbeddedResource Include="..\Raspberry\lib\adafruit_hid\mouse.py">
-      <Link>Resources\adafruit_hid\mouse.py</Link>
-    </EmbeddedResource>
-    <EmbeddedResource Include="..\Raspberry\lib\adafruit_hid\consumer_control.py">
-      <Link>Resources\adafruit_hid\consumer_control.py</Link>
-    </EmbeddedResource>
-    <EmbeddedResource Include="..\Raspberry\lib\adafruit_hid\consumer_control_code.py">
-      <Link>Resources\adafruit_hid\consumer_control_code.py</Link>
-    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
