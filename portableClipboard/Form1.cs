@@ -99,6 +99,27 @@ namespace portableClipboard
             string currentSlot = comboBox1.Text;
             string content = textBox1.Text;
 
+            // 日本語キーボードでの入力不可文字チェック
+            bool isJapaneseKeyboard = checkBox3.Checked;
+            if (!string.IsNullOrEmpty(content) && isJapaneseKeyboard && ContainsUntypableCharactersForJIS(content))
+            {
+                string message = $"スロット{currentSlot}に日本語キーボードで入力できない文字（_ または | または \\）が含まれています。\n\n" +
+                               "これらの文字は日本語キーボードでは直接入力できません。\n" +
+                               "Raspberry Pi Picoでの入力時に問題が発生する可能性があります。\n\n" +
+                               "保存を続行しますか？";
+
+                DialogResult result = MessageBox.Show(
+                    message,
+                    "日本語キーボード非対応文字検出",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+
+                if (result == DialogResult.No)
+                {
+                    return; // 保存をキャンセル
+                }
+            }
+
             // 非ASCII文字チェック
             if (!string.IsNullOrEmpty(content) && ContainsNonAsciiCharacters(content))
             {
@@ -147,18 +168,44 @@ namespace portableClipboard
             {
                 // 現在のテキストボックスの内容をチェック
                 bool hasNonAscii = false;
+                bool hasUntypableChars = false;
+                bool isJapaneseKeyboard = checkBox3.Checked;
                 string currentSlot = comboBox2.SelectedItem?.ToString() ?? "1";
                 
                 if (!string.IsNullOrEmpty(textBox1.Text))
                 {
                     hasNonAscii = ContainsNonAsciiCharacters(textBox1.Text);
+                    hasUntypableChars = isJapaneseKeyboard && ContainsUntypableCharactersForJIS(textBox1.Text);
                 }
                 
                 // USBドライブ内の既存スロットもチェック
                 var nonAsciiSlots = _controller.CheckNonAsciiCharacters(_currentDrive.Path);
+                var untypableSlots = isJapaneseKeyboard ? _controller.CheckUntypableCharactersForJIS(_currentDrive.Path) : new List<string>();
                 
                 string confirmMessage = "Raspberry Pi Pico用のプログラムをUSBドライブに書き込みます。\n" +
                                       "既存のcode.py、config.json、libフォルダは上書きされます。\n\n";
+
+                if (hasUntypableChars || untypableSlots.Count > 0)
+                {
+                    confirmMessage += "⚠️ 警告：";
+                    
+                    if (hasUntypableChars)
+                    {
+                        confirmMessage += $"現在のスロット{currentSlot}";
+                        if (untypableSlots.Count > 0)
+                        {
+                            confirmMessage += "と" + string.Join(", ", untypableSlots);
+                        }
+                    }
+                    else
+                    {
+                        confirmMessage += string.Join(", ", untypableSlots);
+                    }
+                    
+                    confirmMessage += "に日本語キーボードで入力できない文字（_ または | または \\）が含まれています。\n\n" +
+                                     "これらの文字は日本語キーボードでは直接入力できないため、\n" +
+                                     "Raspberry Pi Picoでの入力時に問題が発生する可能性があります。\n\n";
+                }
 
                 if (hasNonAscii || nonAsciiSlots.Count > 0)
                 {
@@ -379,9 +426,56 @@ namespace portableClipboard
             return false;
         }
 
+        /// <summary>
+        /// 文字列に日本語キーボードで入力できない文字（_ または | または \）が含まれているかチェック
+        /// </summary>
+        /// <param name="text">チェック対象の文字列</param>
+        /// <returns>入力できない文字が含まれている場合はtrue</returns>
+        private bool ContainsUntypableCharactersForJIS(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return false;
+
+            // 日本語キーボードで入力できない文字
+            char[] untypableChars = { '_', '|', '\\' };
+
+            foreach (char c in text)
+            {
+                if (Array.IndexOf(untypableChars, c) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private void Form1_Load(object sender, EventArgs e)
         {
-
+            // テスト用：日本語キーボードで入力できない文字を含むテキストを設定
+            if (string.IsNullOrEmpty(textBox1.Text))
+            {
+                string testContent = "# Simple symbols test\n" +
+                                   "hello_world test_string\n" +
+                                   "user_name|grep admin\n" +
+                                   "file_path C:\\Users\\data.txt\n\n" +
+                                   "# All ASCII symbols\n" +
+                                   "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~\n\n" +
+                                   "# Basic usage examples\n" +
+                                   "email@domain.com\n" +
+                                   "my_variable_name\n" +
+                                   "command_output|filter_data\n" +
+                                   "under_score_test\n" +
+                                   "pipe_test|sort_data\n" +
+                                   "file_name.extension\n" +
+                                   "folder\\subfolder\\file.txt\n" +
+                                   "user@server.com:/path/file\n" +
+                                   "text_with_underscores\n" +
+                                   "data|process|output\n\n" +
+                                   "Windows test complete";
+                
+                textBox1.Text = testContent;
+            }
         }
 
         private void checkBox2_CheckedChanged(object sender, EventArgs e)
