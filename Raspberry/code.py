@@ -7,70 +7,108 @@ from adafruit_hid.keyboard import Keyboard
 from adafruit_hid.keyboard_layout_us import KeyboardLayoutUS
 from adafruit_hid.keycode import Keycode
 
+# Constants
+CONFIG_FILES = {
+    'jis_keymap': '/jis_keymap.json',
+    'function_keys': '/function_keys.json',
+    'config': '/config.json'
+}
+
+DEBUG_MESSAGES = {
+    'file_loaded': '[DEBUG] File loaded successfully',
+    'file_failed': '[DEBUG] File load failed',
+    'button_pressed': '[DEBUG] Button press detected',
+    'led_updated': '[DEBUG] LED update completed',
+    'using_jis': '[DEBUG] Using JIS map for: ',
+    'using_layout': '[DEBUG] Using layout.write for: '
+}
+
+DEFAULT_CONFIG = {
+    'startup_delay': 3,
+    'typing_delay': 0.01,
+    'japanese_keyboard': False,
+    'enable_modifier_keys': False,
+    'add_final_enter': False
+}
+
+# Utility functions
+def load_json_file(filepath, default_value=None):
+    """Load JSON file with error handling"""
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            print(f"[DEBUG] {filepath} loaded successfully")
+            return data
+    except (OSError, ValueError) as e:
+        print(f"[ERROR] {filepath} load failed: {e}")
+        return default_value
+
+def debug_print(message_key, extra_info=""):
+    """Print debug message with consistent formatting"""
+    if message_key in DEBUG_MESSAGES:
+        print(DEBUG_MESSAGES[message_key] + extra_info)
+    else:
+        print(f"[DEBUG] {message_key}{extra_info}")
+
 # Load settings from external configuration files
 def load_jis_keymap():
     """Load JIS keyboard keymap from external file"""
-    try:
-        with open("/jis_keymap.json", "r", encoding="utf-8") as f:
-            keymap_data = json.load(f)
-            print("[DEBUG] jis_keymap.json loaded successfully")
-            
-            # Convert to Keycode objects
-            jis_map = {}
-            for category, mappings in keymap_data.items():
-                print("[DEBUG] Category processing: " + category)
-                for char, keycode_names in mappings.items():
-                    keycodes = []
-                    for name in keycode_names:
-                        if hasattr(Keycode, name):
-                            keycodes.append(getattr(Keycode, name))
-                        else:
-                            print("[WARNING] Unknown keycode: " + name)
-                    if keycodes:
-                        jis_map[char] = keycodes
-                        print("[DEBUG] Mapping added: " + char)
-            
-            print("[DEBUG] JIS keymap loaded")
-            print("[DEBUG] Total mappings loaded: " + str(len(jis_map)))
-            print("[DEBUG] Checking colon mapping")
-            if ':' in jis_map:
-                print("[DEBUG] Colon mapping found: " + str(jis_map[':']))
-            else:
-                print("[DEBUG] Colon mapping NOT found!")
-            print("[DEBUG] All available characters: " + str(list(jis_map.keys())))
-            return jis_map
-    except (OSError, ValueError) as e:
-        print("[ERROR] jis_keymap.json load failed")
-        print("[DEBUG] Using default JIS map")
+    keymap_data = load_json_file(CONFIG_FILES['jis_keymap'])
+    
+    if not keymap_data:
+        debug_print("Using default JIS map")
         return get_default_jis_map()
+    
+    # Convert to Keycode objects
+    jis_map = {}
+    for category, mappings in keymap_data.items():
+        debug_print("Category processing: ", category)
+        for char, keycode_names in mappings.items():
+            keycodes = []
+            for name in keycode_names:
+                if hasattr(Keycode, name):
+                    keycodes.append(getattr(Keycode, name))
+                else:
+                    print(f"[WARNING] Unknown keycode: {name}")
+            if keycodes:
+                jis_map[char] = keycodes
+                debug_print("Mapping added: ", char)
+    
+    debug_print("JIS keymap loaded")
+    debug_print("Total mappings loaded: ", str(len(jis_map)))
+    
+    # Debug colon mapping
+    if ':' in jis_map:
+        debug_print("Colon mapping found: ", str(jis_map[':']))
+    else:
+        debug_print("Colon mapping NOT found!")
+    
+    return jis_map
 
 def load_function_keys():
     """Load function key settings from external file"""
-    try:
-        with open("/function_keys.json", "r", encoding="utf-8") as f:
-            func_data = json.load(f)
-            print("[DEBUG] function_keys.json loaded successfully")
-            
-            # Convert to Keycode objects
-            keycode_map = {}
-            valid_commands = set()
-            
-            for category, mappings in func_data.items():
-                if category == "valid_commands":
-                    valid_commands.update(mappings)
-                else:
-                    for command, keycode_name in mappings.items():
-                        if hasattr(Keycode, keycode_name):
-                            keycode_map[command] = getattr(Keycode, keycode_name)
-                        else:
-                            print("[WARNING] Unknown keycode: " + keycode_name)
-            
-            print("[DEBUG] Function keys loaded")
-            return keycode_map, valid_commands
-    except (OSError, ValueError) as e:
-        print("[ERROR] function_keys.json load failed")
-        print("[DEBUG] Using default function keys")
+    func_data = load_json_file(CONFIG_FILES['function_keys'])
+    
+    if not func_data:
+        debug_print("Using default function keys")
         return get_default_function_keys()
+    
+    # Convert to Keycode objects
+    keycode_map = {}
+    valid_commands = set()
+    
+    for category, mappings in func_data.items():
+        if category == "valid_commands":
+            valid_commands.update(mappings)
+        else:
+            for command, keycode_name in mappings.items():
+                if hasattr(Keycode, keycode_name):
+                    keycode_map[command] = getattr(Keycode, keycode_name)
+                else:
+                    print(f"[WARNING] Unknown keycode: {keycode_name}")
+    
+    debug_print("Function keys loaded")
+    return keycode_map, valid_commands
 
 def get_default_jis_map():
     """Default JIS map (fallback)"""
@@ -98,15 +136,21 @@ FUNCTION_KEYCODE_MAP, VALID_COMMANDS = load_function_keys()
 
 # Configuration loading function
 def load_config():
-    try:
-        with open("/config.json", "r", encoding="utf-8") as f:
-            config = json.load(f)
-            print("[DEBUG] config.json loaded successfully")
-            print("[DEBUG] Configuration loaded")
-            return config
-    except (OSError, ValueError) as e:
-        print("[ERROR] config.json load failed")
-        raise
+    """Load main configuration with defaults"""
+    config = load_json_file(CONFIG_FILES['config'], DEFAULT_CONFIG.copy())
+    
+    if config is None:
+        print("[ERROR] Failed to load config.json, using defaults")
+        config = DEFAULT_CONFIG.copy()
+    else:
+        # Merge with defaults to ensure all keys exist
+        for key, default_value in DEFAULT_CONFIG.items():
+            if key not in config:
+                config[key] = default_value
+                print(f"[INFO] Using default value for {key}: {default_value}")
+    
+    debug_print("Configuration loaded")
+    return config
 
 # Load configuration
 print("[INIT] Loading configuration...")
@@ -160,52 +204,57 @@ print("[INIT] Hardware initialization complete")
 current_slot = 1
 
 def read_file(filepath):
+    """Read text file with UTF-8 encoding and normalization"""
     try:
         with open(filepath, "r", encoding="utf-8") as f:
             content = f.read()
+            # Remove BOM if present
             if content.startswith('\ufeff'):
                 content = content[1:]
+            # Normalize line endings
             content = content.replace('\r\n', '\n').replace('\r', '\n')
-            print("[DEBUG] File loaded successfully")
+            debug_print('file_loaded')
             return content
     except OSError:
-        print("[DEBUG] File load failed")
+        debug_print('file_failed')
         return None
 
 def update_leds(slot):
+    """Update LED display for current slot"""
     for i, led in enumerate(leds, start=1):
         led.value = (i == slot)
-    print("[DEBUG] LED update completed")
+    debug_print('led_updated')
 
 def button_pressed(button, last_state, name=""):
+    """Check if button was pressed (falling edge detection)"""
     current_state = button.value
     pressed = (last_state and not current_state)
     if pressed:
-        print("[DEBUG] Button press detected")
+        debug_print('button_pressed')
     return pressed, current_state
 
 def send_character(char):
     """Send character with keyboard type support"""
     japanese_keyboard = config.get('japanese_keyboard', True)
     
-    print("[DEBUG] send_character called for: " + char)
-    print("[DEBUG] japanese_keyboard: " + str(japanese_keyboard))
+    print(f"[DEBUG] send_character called for: {char}")
+    print(f"[DEBUG] japanese_keyboard: {japanese_keyboard}")
     
     if japanese_keyboard and char in JIS_KEYCODE_MAP:
         # JIS symbol on Japanese keyboard
         keycodes = JIS_KEYCODE_MAP[char]
-        print("[DEBUG] Using JIS map for: " + char)
-        print("[DEBUG] Keycodes: " + str(keycodes))
+        debug_print('using_jis', char)
+        print(f"[DEBUG] Keycodes: {keycodes}")
         keyboard.send(*keycodes)
     else:
-        print("[DEBUG] Using layout.write for: " + char)
+        debug_print('using_layout', char)
         if char == ':':
             print("[DEBUG] COLON not found in JIS_KEYCODE_MAP!")
-            print("[DEBUG] Available keys: " + str(list(JIS_KEYCODE_MAP.keys())))
+            print(f"[DEBUG] Available keys: {list(JIS_KEYCODE_MAP.keys())}")
         layout.write(char)
 
 def convert_text_symbols(text):
-    """Symbol conversion for English keyboard (direct output)"""
+    """Symbol conversion for English keyboard (currently direct output)"""
     return text
 
 def find_brace_commands(text):
@@ -250,20 +299,17 @@ def convert_for_japanese_keyboard_smart(text):
     last_end = 0
     
     for start, end, command in commands:
+        # Add text before command
         if start > last_end:
-            normal_text = text[last_end:start]
-            result += normal_text
+            result += text[last_end:start]
         
-        if is_valid_key_command(command):
-            result += '{' + command + '}'
-        else:
-            result += '{' + command + '}'
-        
+        # Always preserve commands (valid or invalid)
+        result += '{' + command + '}'
         last_end = end
     
+    # Add remaining text
     if last_end < len(text):
-        remaining_text = text[last_end:]
-        result += remaining_text
+        result += text[last_end:]
     
     return result
 
@@ -373,6 +419,10 @@ def send_tokens(tokens, typing_delay, add_final_enter=False):
             print(f"[ERROR] Token error: {e}")
             continue
 
+def extract_ascii_chars(text):
+    """Extract ASCII characters and newlines from text"""
+    return ''.join(char for char in text if char == '\n' or ord(char) <= 127)
+
 def send_text_with_speed(text):
     """Send text at configured speed"""
     typing_delay = config['typing_delay']
@@ -381,12 +431,7 @@ def send_text_with_speed(text):
     japanese_keyboard = config.get('japanese_keyboard', True)
     
     # Extract ASCII characters only
-    ascii_chars = []
-    for char in text:
-        if char == '\n' or ord(char) <= 127:
-            ascii_chars.append(char)
-    
-    processed_text = ''.join(ascii_chars)
+    processed_text = extract_ascii_chars(text)
     
     # Symbol conversion only for English keyboard
     if not japanese_keyboard and enable_modifier_keys:
@@ -434,13 +479,8 @@ def main():
         last_send_state = True
         
         print("[MAIN] Entering main loop...")
-        loop_count = 0
 
         while True:
-            loop_count += 1
-            if loop_count % 1000 == 0:
-                print(f"[HEARTBEAT] Loop count: {loop_count}")
-            
             pressed_next, last_next_state = button_pressed(button_next, last_next_state, "GP11 (Next Button)")
             pressed_send, last_send_state = button_pressed(button_send, last_send_state, "GP14 (Send Button)")
 

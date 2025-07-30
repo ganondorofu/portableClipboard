@@ -12,11 +12,21 @@ namespace portableClipboard
         /// アプリケーションのメイン エントリ ポイントです。
         /// </summary>
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+            
+            Form1 mainForm = new Form1();
+            
+            // コマンドライン引数で /minimized が指定された場合、最小化して起動
+            if (args.Length > 0 && args[0].ToLower() == "/minimized")
+            {
+                mainForm.WindowState = FormWindowState.Minimized;
+                mainForm.ShowInTaskbar = false;
+            }
+            
+            Application.Run(mainForm);
         }
     }
 }

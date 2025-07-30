@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using portableClipboard.Models;
 using portableClipboard.Services;
+using portableClipboard.Utils;
 
 namespace portableClipboard.Controllers
 {
@@ -470,7 +471,7 @@ namespace portableClipboard.Controllers
                 foreach (var slotNumber in slotNumbers)
                 {
                     var slot = _slotService.GetSlot(slotNumber, new UsbDrive("Temp Drive", drivePath, true));
-                    if (!string.IsNullOrEmpty(slot.Content) && ContainsNonAsciiCharacters(slot.Content))
+                    if (!string.IsNullOrEmpty(slot.Content) && TextValidationHelper.ContainsNonAsciiCharacters(slot.Content))
                     {
                         nonAsciiSlots.Add($"スロット{slotNumber}");
                     }
@@ -497,7 +498,7 @@ namespace portableClipboard.Controllers
             {
                 foreach (var kvp in slotContents)
                 {
-                    if (!string.IsNullOrEmpty(kvp.Value) && ContainsNonAsciiCharacters(kvp.Value))
+                    if (!string.IsNullOrEmpty(kvp.Value) && TextValidationHelper.ContainsNonAsciiCharacters(kvp.Value))
                     {
                         nonAsciiSlots.Add($"スロット{kvp.Key}");
                     }
@@ -526,7 +527,7 @@ namespace portableClipboard.Controllers
                 foreach (var slotNumber in slotNumbers)
                 {
                     var slot = _slotService.GetSlot(slotNumber, new UsbDrive("Temp Drive", drivePath, true));
-                    if (!string.IsNullOrEmpty(slot.Content) && ContainsUntypableCharactersForJIS(slot.Content))
+                    if (!string.IsNullOrEmpty(slot.Content) && TextValidationHelper.ContainsUntypableCharactersForJIS(slot.Content))
                     {
                         untypableSlots.Add($"スロット{slotNumber}");
                     }
@@ -538,52 +539,6 @@ namespace portableClipboard.Controllers
             }
 
             return untypableSlots;
-        }
-
-        /// <summary>
-        /// 文字列に非ASCII文字が含まれているかチェック
-        /// </summary>
-        /// <param name="text">チェック対象の文字列</param>
-        /// <returns>非ASCII文字が含まれている場合はtrue</returns>
-        private bool ContainsNonAsciiCharacters(string text)
-        {
-            if (string.IsNullOrEmpty(text))
-                return false;
-
-            foreach (char c in text)
-            {
-                // ASCII文字の範囲は0-127
-                if (c > 127)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// 文字列に日本語キーボードで入力できない文字（_ または | または \）が含まれているかチェック
-        /// </summary>
-        /// <param name="text">チェック対象の文字列</param>
-        /// <returns>入力できない文字が含まれている場合はtrue</returns>
-        private bool ContainsUntypableCharactersForJIS(string text)
-        {
-            if (string.IsNullOrEmpty(text))
-                return false;
-
-            // 日本語キーボードで入力できない文字
-            char[] untypableChars = { '_', '|', '\\' };
-
-            foreach (char c in text)
-            {
-                if (Array.IndexOf(untypableChars, c) >= 0)
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
     }
 }

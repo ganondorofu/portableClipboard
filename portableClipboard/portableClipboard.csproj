@@ -12,6 +12,7 @@
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -74,6 +75,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Constants\WarningMessages.cs" />
     <Compile Include="Controllers\MainFormController.cs" />
     <Compile Include="Models\ClipboardSlot.cs" />
     <Compile Include="Models\UsbDrive.cs" />
@@ -84,6 +86,8 @@
     <Compile Include="Services\UsbDriveService.cs" />
     <Compile Include="SettingManager.cs" />
     <Compile Include="SlotFileManager.cs" />
+    <Compile Include="Utils\MessageHelper.cs" />
+    <Compile Include="Utils\TextValidationHelper.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
